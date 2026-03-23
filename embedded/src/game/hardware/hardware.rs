@@ -218,7 +218,7 @@ impl HardwareComponents {
             let second_clock = pins.gpio5.into_pull_up_input();
 
             let mut vsense_enable_pin = pins.gpio22.into_push_pull_output();
-            vsense_enable_pin.set_high().unwrap();
+            vsense_enable_pin.set_low().unwrap();
 
             let adc: Adc = Adc::new(pac.ADC, &mut pac.RESETS);
             let vsense_pin = pins.gpio26.into_floating_input();
