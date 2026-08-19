@@ -30,6 +30,7 @@
       packages = with pkgs; [
         vscodium
         rust
+        rust-analyzer
         alsa-lib
         pkg-config
         udev
