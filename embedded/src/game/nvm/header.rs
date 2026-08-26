@@ -1,3 +1,10 @@
+/// At boot, the system reads the first page as the "header".
+/// If the first byte of the header matches NVM_SENTINEL,
+/// we assume the save file is legit and load it.
+/// If that byte does not match NVM_SENTINEL,
+/// we assume the chip is in its default state (all 0xFF),
+/// the save file has been corrupted,
+/// or a developer needs to force their NVM to be overwritten.
 use super::page_canon::PageCanon;
 use super::NVM_BLANK;
 

@@ -1,3 +1,6 @@
+/// # Stat Screne
+/// Intended to show detailed information about the pet.
+/// Important to see the current hunger, happiness, health, etc.
 use core::ops::Sub;
 
 use crate::game::color::Rgb332;
@@ -8,7 +11,6 @@ use crate::game::hardware::hardware::LCD_WIDTH;
 use crate::game::hardware::input::KeyNames;
 use crate::game::hardware::rtc::real_date_time::RealDateTime;
 use crate::game::hardware::rtc::real_time::RealTime;
-// use crate::game::nvm::settings::SettingType;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
 
@@ -48,7 +50,13 @@ impl SceneBehavior for StatScene {
 
         {
             let hp_text = fixedstr::str_format!(fixedstr::str12, "HP: {} / {}", curr_hp, max_hp);
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &hp_text);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &hp_text,
+            );
         }
 
         height_offset += 8;
@@ -64,7 +72,13 @@ impl SceneBehavior for StatScene {
 
         {
             let header = "Last fed";
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, header);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                header,
+            );
         }
 
         height_offset += 8;
@@ -76,14 +90,26 @@ impl SceneBehavior for StatScene {
             let feed_deadline_time = RealTime::new(feed_deadline_raw.0, feed_deadline_raw.1, 0);
             let feed_deadline_datetime = RealDateTime::new(feed_deadline_time, last_fed);
             let data = feed_deadline_datetime.to_fixed_str();
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &data);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &data,
+            );
         }
 
         height_offset += 8;
 
         {
             let header = "Next feeding";
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, header);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                header,
+            );
         }
 
         height_offset += 8;
@@ -91,14 +117,26 @@ impl SceneBehavior for StatScene {
         {
             let last_fed = nvm.pet.get_feeding_deadline();
             let data = last_fed.to_fixed_str();
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &data);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &data,
+            );
         }
 
         height_offset += 8;
 
         {
             let header = "Next warning";
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, header);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                header,
+            );
         }
 
         height_offset += 8;
@@ -107,14 +145,26 @@ impl SceneBehavior for StatScene {
             let mut feed_warning = nvm.pet.get_feeding_deadline();
             feed_warning.dec_by_1_hour();
             let data = feed_warning.to_fixed_str();
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &data);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &data,
+            );
         }
 
         height_offset += 8;
 
         {
             let header = "Now";
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, header);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                header,
+            );
         }
 
         height_offset += 8;
@@ -122,14 +172,26 @@ impl SceneBehavior for StatScene {
         {
             let now = crate::game::globals::get_hardware().get_date_time();
             let data = now.to_fixed_str();
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &data);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &data,
+            );
         }
 
         height_offset += 8;
 
         {
             let header = "Time until next feeding";
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, header);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                header,
+            );
         }
 
         height_offset += 8;
@@ -139,7 +201,13 @@ impl SceneBehavior for StatScene {
             let feeding_deadline = nvm.pet.get_feeding_deadline();
             let diff = feeding_deadline.sub(now);
             let data = diff.to_str();
-            text_writer::draw_text(8, height_offset, FontStyle::Small, Rgb332::BLACK, &data);
+            text_writer::draw_text_left_aligned_nowrap(
+                8,
+                height_offset,
+                FontStyle::Small,
+                Rgb332::BLACK,
+                &data,
+            );
         }
     }
 

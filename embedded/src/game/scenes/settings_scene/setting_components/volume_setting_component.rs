@@ -38,7 +38,7 @@ impl SettingComponentTrait for VolumeSettingComponent {
             Rgb332::BLACK,
             "VOLUME",
         );
-        text_writer::draw_text(
+        text_writer::draw_text_left_aligned_nowrap(
             24,
             y_offset + 8,
             FontStyle::Icon,

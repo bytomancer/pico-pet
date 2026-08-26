@@ -1,3 +1,6 @@
+/// Our NVM is broken into pages,
+/// each page containing only 8 bytes of data.
+/// The PageCanon assigns meaning to each page we utilize.
 #[repr(u16)]
 pub enum PageCanon {
     Header1 = 0x000,
@@ -10,7 +13,8 @@ pub enum PageCanon {
     Pet1 = 0x004,
     Pet2 = 0x005,
 
-    PagesInUse,
+    /// Evaluates to the count of enum varaints, useful for array sizing
+    Count,
 }
 impl Into<u16> for PageCanon {
     fn into(self) -> u16 {

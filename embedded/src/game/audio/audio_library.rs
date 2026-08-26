@@ -1,5 +1,6 @@
 use super::audio_track::AudioTrack;
 
+/// Unique identifier and BEAT loader for all audio tracks in the game.
 pub enum AudioId {
     BallGame,
 

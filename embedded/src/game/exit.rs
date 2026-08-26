@@ -1,14 +1,25 @@
-use waveshare_rp2040_lcd_0_96::hal::rom_data;
+use rp2040_hal::rom_data;
 
 use crate::game::color::Rgb332;
 use crate::game::display::render;
 use crate::game::display::text_writer;
+use crate::game::hardware::hardware::LCD_HEIGHT;
 
+/// Custom panic handler
+/// When we have access to an initialized global hardware struct,
+/// The error is displayed to the screen with the line number of the error.
+/// Any active audio is cancelled.
+/// The display brightness is temporarily maximized.
+/// Then you can press a button to reboot.
+///
+/// If the hardware isn't yet initialized,
+/// we just reboot.
 #[panic_handler]
-#[allow(static_mut_refs)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    if unsafe { crate::game::globals::HARDWARE.is_none() } {
+    if !crate::game::globals::is_hardware_initialized() {
         loop {
+            // TODO: change this to regular reboot for release
+            // cortex_m::peripheral::SCB::sys_reset();
             rom_data::reset_to_usb_boot(0, 0);
             // if reset fails, just sleep
             cortex_m::asm::wfi();
@@ -31,7 +42,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         "PANIC!",
     );
 
-    text_writer::draw_text_wrapped(
+    text_writer::draw_text_left_aligned_wrapped(
         0,
         16,
         text_writer::FontStyle::Small,
@@ -41,29 +52,34 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 
     text_writer::draw_text_centered(
         64,
-        128 - 15,
+        LCD_HEIGHT as i32 - 15,
         text_writer::FontStyle::Small,
         Rgb332::WHITE,
         "press any key to reboot",
     );
 
-    render::draw(&mut hardware.display);
+    render::draw_buffer_to_screen(&mut hardware.display);
 
     while !hardware.key0_pressed()
         && !hardware.key1_pressed()
         && !hardware.key2_pressed()
         && !hardware.key3_pressed()
     {}
-    // TODO (RELEASE): don't reset to USB
+    // TODO (Release): don't reset to USB
     rom_data::reset_to_usb_boot(0, 0);
     // if reset fails, just reboot
     cortex_m::peripheral::SCB::sys_reset()
 }
 
-#[allow(static_mut_refs)]
+/// A small scene for the reboot operation.
+/// The screen informs the user a reboot is in progress.
+/// Any active audio is cancelled.
+/// The display brightness is temporarily maximized.
 pub fn reboot() -> ! {
-    if unsafe { crate::game::globals::HARDWARE.is_none() } {
+    if !crate::game::globals::is_hardware_initialized() {
         loop {
+            // TODO: change this to regular reboot for release
+            // cortex_m::peripheral::SCB::sys_reset();
             rom_data::reset_to_usb_boot(0, 0);
             // if reset fails, just sleep
             cortex_m::asm::wfi();
@@ -77,13 +93,13 @@ pub fn reboot() -> ! {
     }
     text_writer::draw_text_centered(
         64,
-        128 - 15,
+        LCD_HEIGHT as i32 - 15,
         text_writer::FontStyle::Small,
         Rgb332::WHITE,
         "Rebooting...",
     );
 
-    render::draw(&mut hardware.display);
+    render::draw_buffer_to_screen(&mut hardware.display);
 
     hardware.delay.delay_ms(1_000);
     cortex_m::peripheral::SCB::sys_reset()

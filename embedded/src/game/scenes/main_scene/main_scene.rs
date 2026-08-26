@@ -1,3 +1,11 @@
+/// # Main Scene
+/// When the user first wakes the vpet for the day,
+/// this is where they will be.
+///
+/// Contains a menu to reach many of the other scenes.
+///
+/// We should have little animations on this screen,
+/// where the pet expresses their personality.
 use crate::game::audio::audio_library::AudioId;
 use crate::game::audio::audio_player::AudioPlayer;
 use crate::game::audio::audio_player::AutoPlayMode;
@@ -6,10 +14,11 @@ use crate::game::display::sprite::Sprite;
 use crate::game::display::sprite_factory;
 use crate::game::display::sprite_factory::MENU_DIMENSIONS;
 use crate::game::hardware::hardware::LCD_HEIGHT;
+use crate::game::hardware::hardware::LCD_WIDTH;
 use crate::game::hardware::input::KeyNames;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
-use crate::game::FRAME_RATE;
+use crate::game::APPROXIMATE_FRAME_RATE;
 
 use super::menu_selection::MenuSelection;
 
@@ -25,8 +34,8 @@ pub struct MainScene<'a> {
 impl Default for MainScene<'static> {
     fn default() -> Self {
         let ferris = sprite_factory::new_ferris_sprite(
-            (128 - sprite_factory::FERRIS_DIMENSIONS.w as i32) / 2,
-            128 - 64,
+            (LCD_WIDTH as i32 - sprite_factory::FERRIS_DIMENSIONS.w as i32) / 2,
+            LCD_HEIGHT as i32 - 64,
         );
 
         let menu_sprite = sprite_factory::new_menu_sprite(0, 0);
@@ -45,12 +54,12 @@ impl Default for MainScene<'static> {
 impl SceneBehavior for MainScene<'static> {
     fn tick(&mut self) {
         self.frame_count += 1;
-        if self.frame_count % (4 * FRAME_RATE) == (1 * FRAME_RATE)
-            || self.frame_count % (4 * FRAME_RATE) == 0
+        if self.frame_count % (4 * APPROXIMATE_FRAME_RATE) == (1 * APPROXIMATE_FRAME_RATE)
+            || self.frame_count % (4 * APPROXIMATE_FRAME_RATE) == 0
         {
             self.ferris.x -= 8;
-        } else if self.frame_count % (4 * FRAME_RATE) == (2 * FRAME_RATE)
-            || self.frame_count % (4 * FRAME_RATE) == (3 * FRAME_RATE)
+        } else if self.frame_count % (4 * APPROXIMATE_FRAME_RATE) == (2 * APPROXIMATE_FRAME_RATE)
+            || self.frame_count % (4 * APPROXIMATE_FRAME_RATE) == (3 * APPROXIMATE_FRAME_RATE)
         {
             self.ferris.x += 8;
         }
@@ -60,14 +69,14 @@ impl SceneBehavior for MainScene<'static> {
         self.ferris_cry.tick();
         self.button_beep.tick();
 
-        if self.frame_count % (2 * FRAME_RATE) == FRAME_RATE {
+        if self.frame_count % (2 * APPROXIMATE_FRAME_RATE) == APPROXIMATE_FRAME_RATE {
             self.ferris_cry.play();
         }
     }
 
     fn draw(&mut self) {
         self.ferris
-            .draw(((self.frame_count / FRAME_RATE) % 2) as usize);
+            .draw(((self.frame_count / APPROXIMATE_FRAME_RATE) % 2) as usize);
 
         let sel_item = self.menu_item_selected as usize;
         let prev_item = self.menu_item_selected.prev() as usize;

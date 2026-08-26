@@ -1,5 +1,13 @@
+/// The number of frames a key must be held before key_repeat_triggered = true
 const KEY_REPEAT_FRAMES: usize = 5;
 
+/// The state of a key is comprised of several flags and a held frame count
+/// The key state is polled at the start of each game loop.
+/// This can rarely cause a failure to register a keypress,
+/// if it wasn't pressed during that poll.
+/// We poll at the framerate,
+/// so this can occur at low framerates,
+/// but it is extremely infrequent above 20fps.
 #[derive(Default)]
 pub struct KeyState {
     pub is_down: bool,
@@ -11,6 +19,8 @@ pub struct KeyState {
 }
 
 impl KeyState {
+    /// Updates the key state for the frame,
+    /// with information about if the key was down during the poll.
     fn update(&mut self, is_down: bool) {
         self.was_down = self.is_down;
         self.is_down = is_down;
@@ -25,7 +35,6 @@ impl KeyState {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum KeyNames {
     Back = 0,
@@ -34,6 +43,7 @@ pub enum KeyNames {
     Confirm,
     Clock,
 
+    /// Evaluates to the count of enum varaints, useful for array sizing
     Count,
 }
 impl Into<usize> for KeyNames {
@@ -48,6 +58,7 @@ pub struct InputHandler {
 }
 
 impl InputHandler {
+    /// Polls for each key's pressed status then runs the keystate update.
     pub fn update(&mut self) {
         let hardware = crate::game::globals::get_hardware();
         let key_positions = [
@@ -62,6 +73,8 @@ impl InputHandler {
         }
     }
 
+    /// Resets all KeyStates.
+    /// Currently used for the idle state.
     pub fn force_reset(&mut self) {
         for i in 0..self.keys.len() {
             self.keys[i].update(false);
@@ -69,6 +82,7 @@ impl InputHandler {
         }
     }
 
+    /// Queries for a specific key's KeyState.
     pub fn get_state(&self, name: &KeyNames) -> &KeyState {
         &self.keys[name.clone() as usize]
     }

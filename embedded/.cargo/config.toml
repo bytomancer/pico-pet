@@ -3,12 +3,16 @@ target = "thumbv6m-none-eabi"
 
 [target.thumbv6m-none-eabi]
 rustflags = [
-    "-C", "link-arg=--nmagic",
-    "-C", "link-arg=-Tlink.x",
-    "-C", "no-vectorize-loops",
-    "-C", "opt-level=z",
-    "-C", "lto=fat",
-    "-C", "codegen-units=1",
+    "-C",
+    "link-arg=--nmagic",
+    "-C",
+    "link-arg=-Tlink.x",
+    "-C",
+    "no-vectorize-loops",
+    "-C",
+    "opt-level=z",
+    "-C",
+    "codegen-units=1",
 ]
 
 runner = "elf2uf2-rs -d"

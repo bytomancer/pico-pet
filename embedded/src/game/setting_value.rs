@@ -1,5 +1,7 @@
 const SETTING_BAR_SIZE: usize = 15;
 
+/// Most settings get stored as a u8,
+/// but their true limits are bound far smaller.
 pub struct Setting {
     // must be pub to allow static instantiation
     pub value: u8,
@@ -34,6 +36,13 @@ impl Setting {
         self.value = (self.value.saturating_sub(1)).max(self.min_value);
     }
 
+    /// This generates a special string that represents the setting.
+    /// The bar can be rendered using the ICON_FONT.
+    /// For example, if the VOLUME setting is set at 50%,
+    /// your generated string will be...
+    /// 44444445=======]
+    /// 4 is "filled" bar, 5 is the slider, and = is empty.
+    /// When empty, the bar can also display [ and ] for its edges.
     pub fn generate_bar(&self, active: bool) -> &'static str {
         static mut BUFFER: [u8; SETTING_BAR_SIZE + 1] = [BAR_EMPTY; SETTING_BAR_SIZE + 1];
 

@@ -29,6 +29,7 @@ impl Into<bool> for AutoPlayMode {
     }
 }
 
+/// An object that represents audio playback.
 pub struct AudioPlayer {
     repeat: bool,
     tracker: Option<usize>,

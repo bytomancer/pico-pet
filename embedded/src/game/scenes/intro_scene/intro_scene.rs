@@ -1,8 +1,21 @@
+/// #Intro Scene
+/// Intended to introduce the user to the vpet,
+/// teach them about pomodoros,
+/// and setup some basic settings.
+///
+/// Importantly, this scene is our boot scene.
+/// If the nvm is in a "fresh" state,
+/// we stay on this scene,
+/// otherwise we skip straight to main.
+///
+/// Completing this scene writes a new save file to the NVM.
 use core::usize;
 
 use crate::game::color::Rgb332;
 use crate::game::display::render;
 use crate::game::display::text_writer;
+use crate::game::hardware::hardware::LCD_HEIGHT;
+use crate::game::hardware::hardware::LCD_WIDTH;
 use crate::game::hardware::input::KeyNames;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
@@ -17,8 +30,6 @@ impl Default for IntroScene {
         let next_scene = if nvm.fresh {
             None
         } else {
-            // DEBUG
-            // None
             Some(SceneType::Main)
         };
         Self {
@@ -43,7 +54,7 @@ impl SceneBehavior for IntroScene {
     }
 
     fn sound(&mut self) {
-        //
+        ()
     }
 
     fn draw(&mut self) {
@@ -53,7 +64,13 @@ impl SceneBehavior for IntroScene {
         if self.frame > anim_end {
             text_writer::full_dialog_box("Setup", "DEBUGGING\npress ok to skip");
         } else {
-            render::fill_rect(0, 0, 128, 128, Self::fade_function(anim_frame as u8))
+            render::fill_rect(
+                0,
+                0,
+                LCD_WIDTH,
+                LCD_HEIGHT,
+                Self::fade_function(anim_frame as u8),
+            )
         }
     }
 
@@ -62,6 +79,9 @@ impl SceneBehavior for IntroScene {
     }
 }
 impl IntroScene {
+    /// Probably a placeholder unless we keep it...
+    /// Fades the screen through some rainbow colours,
+    /// based on the current frame of the animation.
     fn fade_function(f: u8) -> Rgb332 {
         // frame 1: red = 1
         // frame 2: green = 1

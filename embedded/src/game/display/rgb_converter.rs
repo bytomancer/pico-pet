@@ -1,3 +1,15 @@
+/// This array converts any RGB332 into an equivalent RGB565 color.
+/// Given that RGB332 is 8-bits, it uses the incoming color as the array index.
+/// This was adapted to Rust from a C source.
+/// Source: [https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/]
+///
+/// TODO: If we would like to adjust the palette,
+/// or create multiple palettes,
+/// we can add more conversion look up tables like this.
+/// Note that each one we use consumes 256 bytes.
+/// Currently this one palette look up table is stored in RAM,
+/// but if we do utilize more we can store them in ROM,
+/// then load only the active look up tables.
 pub const RGB_332_TO_565: [u16; 256] = [
     0x0000, 0x000a, 0x0015, 0x001f, 0x0120, 0x012a, 0x0135, 0x013f, 0x0240, 0x024a, 0x0255, 0x025f,
     0x0360, 0x036a, 0x0375, 0x037f, 0x0480, 0x048a, 0x0495, 0x049f, 0x05a0, 0x05aa, 0x05b5, 0x05bf,

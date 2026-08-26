@@ -1,3 +1,4 @@
+/// Custom implementations for Real Time Clock operations.
 pub mod dow;
 pub mod interval_date_time;
 pub mod meridian;
@@ -6,9 +7,12 @@ pub mod real_date;
 pub mod real_date_time;
 pub mod real_time;
 
+#[allow(unused)]
 pub use self::real_date::RealDate;
+#[allow(unused)]
 pub use self::real_date_time::RealDateTime;
-// pub use self::real_time::RealTime;
+#[allow(unused)]
+pub use self::real_time::RealTime;
 
 use self::dow::DayOfWeek;
 use self::month::Month;
@@ -20,11 +24,17 @@ pub fn dec_to_bcd(n: u8) -> u8 {
     (n / 10) * 16 + (n % 10)
 }
 
+/// Determines if the current year is a leap year.
+/// We use the DS3231, which uses a naive leap year test.
+/// This function obeys the DS3231's implementation.
+/// **The year 2100, 2200, and 2300 will erroneously be counted as leap years.**
+/// This follows for 2500, 2600, 2700, 2900...
+/// I don't like this error, but it will not occur in our lifetimes.
 fn is_leap_year(years_since_2k: u8) -> bool {
-    // This is not accurate, but it does match the RTC's behavior
     years_since_2k % 4 == 0
 }
 
+/// Simple doomsday algorithm
 fn find_day_of_week(day: u8, month: Month, year: u8) -> DayOfWeek {
     let y2k_anchor_day = DayOfWeek::Tuesday as i16;
     let anchor_day =

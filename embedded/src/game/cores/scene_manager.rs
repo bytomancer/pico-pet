@@ -8,6 +8,12 @@ use crate::game::scenes::stat_scene::stat_scene::StatScene;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
 
+/// The scene manager tracks the current state of the game as a "scene".
+/// Common scenes are the "main" scene or the "settings" scene.
+/// The manager keeps exactly 1 Some scene, tied to the active_scene.
+/// All other possible scenes should be None.
+/// Upon boot, the IntroScene is always the first scene.
+/// It is up to the IntroScene to then determine if it should be skipped.
 pub struct SceneManager<'a> {
     pub intro_scene: Option<IntroScene>,
 
@@ -37,6 +43,10 @@ impl<'a> Default for SceneManager<'a> {
     }
 }
 impl SceneManager<'static> {
+    /// Provides a dynamic pointer to the current scene for dynamic dispatch.
+    /// All scenes must impl the SceneBehavior trait.
+    /// When the scene manager acts on the active scene,
+    /// this trait represents what it needs to perform on it.
     fn get_scene(&mut self) -> &mut dyn SceneBehavior {
         match self.active_scene {
             SceneType::Intro => self.intro_scene.as_mut().unwrap(),
@@ -49,6 +59,11 @@ impl SceneManager<'static> {
         }
     }
 
+    /// This function is the game's full life cycle of 1 frame:
+    /// - Parse input
+    /// - Tick, performing any logic
+    /// - Produce sounds
+    /// - Draw a frame to the display buffer
     pub fn update_and_draw(&mut self) {
         let curr_scene = self.get_scene();
         curr_scene.input();
@@ -57,6 +72,10 @@ impl SceneManager<'static> {
         curr_scene.draw();
     }
 
+    /// Tests the current scene for what it declares as the next scene.
+    /// If the current scene returns None from `get_scene`, nothing happens.
+    /// If a Some(SceneType) is returned, then the current scene ends,
+    /// and a new scene of the SceneType is instantiated as the new current scene.
     pub fn advance_scene(&mut self) {
         let curr_scene = self.get_scene();
         match curr_scene.next_scene().clone() {
@@ -84,6 +103,14 @@ impl SceneManager<'static> {
                 }
             }
             None => {}
+        }
+    }
+
+    /// This provides a list of scenes where the "idle" state cannot appear.
+    pub fn is_current_scene_unidleable(&self) -> bool {
+        match self.active_scene {
+            SceneType::Pomo | SceneType::Intro => true,
+            _ => false,
         }
     }
 }

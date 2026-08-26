@@ -1,3 +1,12 @@
+/// Pomodoro Scene
+/// This is the scene the user interacts with to complete pomodoros.
+/// It's another excellent place for the pets to show simple animations,
+/// without being overly distracting,
+/// but ultimately builds character for the pet.
+///
+/// This is one of the most fleshed out scenes currently,
+/// but the animation in the center of the screen is a placeholder.
+/// Mechanically, the scene works exactly as I invisioned it.
 use crate::game::audio::audio_library::AudioId;
 use crate::game::audio::audio_player::AudioPlayer;
 use crate::game::audio::audio_player::AutoPlayMode;

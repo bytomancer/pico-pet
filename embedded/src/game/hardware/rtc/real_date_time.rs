@@ -6,29 +6,29 @@ use super::month::Month;
 use super::real_date::RealDate;
 use super::real_time::RealTime;
 
-#[allow(dead_code)]
+#[allow(unused)]
 #[derive(Copy, Clone)]
 pub struct RealDateTime {
     pub time: RealTime,
     pub date: RealDate,
 }
 impl RealDateTime {
-    #[allow(dead_code)]
+    #[allow(unused)]
     pub fn new(time: RealTime, date: RealDate) -> Self {
         Self { time, date }
     }
 
     pub fn to_y2k_epoch(&self) -> u32 {
-        let mut month_seconds = 0;
+        let mut seconds_from_previous_months = 0;
         for month in 1..self.date.month {
             let days_in_month = Month::from(month).days_in_month(self.date.year_since_2k);
-            month_seconds += days_in_month as u32 * (60 * 60 * 24);
+            seconds_from_previous_months += days_in_month as u32 * (60 * 60 * 24);
         }
         self.time.sec as u32
             + self.time.min as u32 * 60
             + self.time.hr as u32 * (60 * 60)
             + self.date.day_of_month as u32 * (60 * 60 * 24)
-            + month_seconds
+            + seconds_from_previous_months
     }
 
     pub fn dec_by_1_hour(&mut self) {

@@ -6,6 +6,8 @@ pub mod pomo_scene;
 pub mod settings_scene;
 pub mod stat_scene;
 
+/// Enumeration for each type of scene.
+/// Used by the [`SceneManager`] to identify the active scene.
 #[derive(Clone)]
 pub enum SceneType {
     Intro,
@@ -24,6 +26,14 @@ impl Default for SceneType {
     }
 }
 
+/// Every scene must implement SceneBehavior.
+/// On every frame:
+/// - `input()` is called.
+/// - `tick()` is called.
+/// - `sound()` is called.
+/// - `draw()` is called.
+/// - The MCU primary core blocks while the display buffer pushes to the LCD.
+/// - `next_scene()` is called, and if it returns Some, the scene changes.
 pub trait SceneBehavior {
     fn input(&mut self);
     fn tick(&mut self);

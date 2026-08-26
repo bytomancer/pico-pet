@@ -41,8 +41,11 @@ fn main() {
     ];
 
     for &(note, freq) in &freq_table {
-        let best_combo = get_closest_setting(freq);
-        println!("            Self::{} => {:?},", note, best_combo);
+        let best_tuple = get_closest_setting(freq);
+        println!(
+            "            Self::{} => AudioRegisterConfig::new{:?},",
+            note, best_tuple
+        );
     }
 }
 

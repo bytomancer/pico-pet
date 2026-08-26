@@ -1,5 +1,10 @@
 use super::render;
 
+/// A simple sprite ready to display to the screen.
+/// Must have the w, h, and data from its sprite sheet.
+/// The x & y specify its position on the screen,
+/// with 0,0 being at the top left.
+/// Sprites should be created via the [`sprite_factory`].
 pub struct Sprite<'a> {
     pub x: i32,
     pub y: i32,

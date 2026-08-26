@@ -1,6 +1,11 @@
+/// # Not Yet Implementd Scene
+/// You can access this scene currently via the main menu,
+/// as it is being used as a placeholder for scenes not yet implemented.
+///
+/// It is an excellent place to put any debugging and test code.
 use crate::game::color::Rgb332;
 use crate::game::display::text_writer;
-use crate::game::display::text_writer::draw_text;
+use crate::game::display::text_writer::draw_text_left_aligned_nowrap;
 use crate::game::display::text_writer::FontStyle;
 use crate::game::hardware::input::KeyNames;
 use crate::game::hardware::rtc::real_date_time::RealDateTime;
@@ -28,6 +33,19 @@ impl Default for NyiScene {
             fps: 0,
         }
     }
+    frame_count: usize,
+    fps: usize,
+}
+impl Default for NyiScene {
+    fn default() -> Self {
+        Self {
+            next_scene: None,
+            running_bat_readings: [0; NUM_BAT_SAMPLES],
+            bat_reading_i: 0,
+            frame_count: 0,
+            fps: 0,
+        }
+    }
 }
 
 impl SceneBehavior for NyiScene {
@@ -40,9 +58,14 @@ impl SceneBehavior for NyiScene {
             self.fps = self.frame_count;
             self.frame_count = 0;
         }
+        if input.get_state(&KeyNames::Clock).just_released {
+            self.fps = self.frame_count;
+            self.frame_count = 0;
+        }
     }
 
     fn tick(&mut self) {
+        self.frame_count += 1;
         self.frame_count += 1;
     }
 
@@ -111,9 +134,9 @@ impl SceneBehavior for NyiScene {
         nvm.pet.is_hungry = now > next_feed;
 
         let mut y = 16;
-        draw_text(8, y, FontStyle::Small, Rgb332::BLACK, "NOW:");
+        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "NOW:");
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
@@ -130,7 +153,7 @@ impl SceneBehavior for NyiScene {
             ),
         );
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
@@ -167,9 +190,9 @@ impl SceneBehavior for NyiScene {
         // );
 
         y += 8;
-        draw_text(8, y, FontStyle::Small, Rgb332::BLACK, "NEXT FEED DEADLINE:");
+        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "NEXT FEED DEADLINE:");
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
@@ -186,7 +209,7 @@ impl SceneBehavior for NyiScene {
             ),
         );
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
@@ -195,9 +218,9 @@ impl SceneBehavior for NyiScene {
         );
 
         y += 8;
-        draw_text(8, y, FontStyle::Small, Rgb332::BLACK, "HUNGRY?:");
+        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "HUNGRY?:");
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
@@ -223,9 +246,9 @@ impl SceneBehavior for NyiScene {
         let vsense_avg = vsense_sum / NUM_BAT_SAMPLES as u32;
 
         y += 8;
-        draw_text(8, y, FontStyle::Small, Rgb332::BLACK, "BATTERY LEVEL:");
+        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "BATTERY LEVEL:");
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,

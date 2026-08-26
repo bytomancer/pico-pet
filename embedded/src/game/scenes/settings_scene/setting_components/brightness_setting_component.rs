@@ -38,7 +38,7 @@ impl SettingComponentTrait for BrightnessSettingComponent {
             Rgb332::BLACK,
             "BRIGHTNESS",
         );
-        text_writer::draw_text(
+        text_writer::draw_text_left_aligned_nowrap(
             24,
             y_offset + 8,
             FontStyle::Icon,

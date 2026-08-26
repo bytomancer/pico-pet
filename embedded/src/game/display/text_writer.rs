@@ -14,7 +14,7 @@ static mut BIG_REGULAR_FONT: Option<Font> = None;
 static mut BIG_BOLD_FONT: Option<Font> = None;
 static mut BIG_ITALIC_FONT: Option<Font> = None;
 
-// TODO (RELEASE): Remove unused fonts
+// TODO (Release): Remove any unused fonts
 #[allow(dead_code)]
 pub enum FontStyle {
     Small,
@@ -35,6 +35,8 @@ impl FontStyle {
     }
 }
 
+/// This is considered a "global" store of all fonts,
+/// which get pre-loaded into RAM.
 pub fn init_singleton_fonts() {
     unsafe {
         SMALL_FONT = Some(FontFactory::new_small_font());
@@ -45,7 +47,9 @@ pub fn init_singleton_fonts() {
     }
 }
 
-// TODO: center each line
+/// Draws a specified string to the display buffer.
+/// **NOTE: Do not use \n with centered text!**
+/// TODO: Add \n support through recursion over draw_text_centered()
 pub fn draw_text_centered(x: i32, y: i32, style: FontStyle, color: Rgb332, text: &str) {
     let font = get_font(style);
     let (width, _) = font.size.get_glyph_dimensions();
@@ -53,15 +57,18 @@ pub fn draw_text_centered(x: i32, y: i32, style: FontStyle, color: Rgb332, text:
     font.draw_text(x, y, color, text, false);
 }
 
-pub fn draw_text(x: i32, y: i32, style: FontStyle, color: Rgb332, text: &str) {
+/// Loads the specified font and draws the text to the display buffer.
+/// If the string goes off screen there will be no wrapping,
+/// the overflow characters will not be shown.
+pub fn draw_text_left_aligned_nowrap(x: i32, y: i32, style: FontStyle, color: Rgb332, text: &str) {
     let font = get_font(style);
-
     font.draw_text(x, y, color, text, false)
 }
 
-pub fn draw_text_wrapped(x: i32, y: i32, style: FontStyle, color: Rgb332, text: &str) {
+/// Loads the specified font and draws the text to the display buffer.
+/// Text will wrap if it goes off screen.
+pub fn draw_text_left_aligned_wrapped(x: i32, y: i32, style: FontStyle, color: Rgb332, text: &str) {
     let font = get_font(style);
-
     font.draw_text(x, y, color, text, true)
 }
 
@@ -78,6 +85,7 @@ fn get_font(style: FontStyle) -> &'static Font<'static> {
     }
 }
 
+/// Our standard 1-line dialog box at the bottom of the screen.
 pub fn bottom_dialog_box(text: &str) {
     let height = 18usize;
     let box_x: i32 = 0;
@@ -91,6 +99,7 @@ pub fn bottom_dialog_box(text: &str) {
     draw_text_centered(text_x, text_y, FontStyle::Small, Rgb332::BLUE, text)
 }
 
+/// A larger dialog box at the bottom of the screen.
 pub fn bottom_big_dialog_box_custom_color(text: &str, color: Rgb332) {
     let height = 24usize;
     let box_x: i32 = 24;
@@ -104,6 +113,8 @@ pub fn bottom_big_dialog_box_custom_color(text: &str, color: Rgb332) {
     draw_text_centered(text_x, text_y, FontStyle::BigBold, color, text)
 }
 
+/// Draws a dialog box over the entire screen.
+/// Useful for menus or info dumps.
 pub fn full_dialog_box(title: &str, text: &str) {
     let title_width = 8 * title.len() as i32;
     let title_x = 64 - (title_width / 2);
@@ -111,6 +122,6 @@ pub fn full_dialog_box(title: &str, text: &str) {
     render::flood(Rgb332::WHITE);
     render::fancy_border(0, 0, LCD_WIDTH, LCD_HEIGHT);
 
-    draw_text(title_x, 5, FontStyle::BigBold, Rgb332::BLACK, title);
-    draw_text(5, 18, FontStyle::Small, Rgb332::BLUE, text);
+    draw_text_left_aligned_nowrap(title_x, 5, FontStyle::BigBold, Rgb332::BLACK, title);
+    draw_text_left_aligned_nowrap(5, 18, FontStyle::Small, Rgb332::BLUE, text);
 }

@@ -1,3 +1,7 @@
+/// To add a sprite to the game,
+/// append its data into these structures here.
+/// You must specify the dimensions of each sprite sheet.
+/// **Sprite sheets MUST be exported as "Vertical Strip"!**
 use super::sprite::Sprite;
 
 pub struct Dimensions {

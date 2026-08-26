@@ -7,14 +7,32 @@ use crate::game::hardware::hardware::Lcd;
 use crate::game::hardware::hardware::LCD_HEIGHT;
 use crate::game::hardware::hardware::LCD_WIDTH;
 
+/// This is our display buffer.
+/// It consumes LCD_WIDTH * LCD_HEIGHT * 16-bits of RAM.
+/// The color format inside the buffer is RGB565,
+/// which is what the ST7735 driver we use requires.
+/// TODO: Consider optimizing by replacing ST7735 driver and using RGB444.
 static mut BUFFER: [u16; LCD_WIDTH * LCD_HEIGHT] = [0b00000_111111_00000; LCD_WIDTH * LCD_HEIGHT];
 
-pub fn draw(display: &mut Lcd) {
+/// Writes our internal display buffer to the screen.
+/// We use the internal buffer to prevent tearing and partial draws.
+/// It is possible to draw directly into the ST7735's internal display cache,
+/// but the draw does not sync and there are timing issues,
+/// producing strange artifacts.
+/// By batching this process, we create a double-buffer display system,
+/// eliminating all tearing and artifacts.
+pub fn draw_buffer_to_screen(display: &mut Lcd) {
     unsafe {
         display.write_pixels_buffered(BUFFER).unwrap();
     }
 }
 
+/// Namesake: https://en.wiktionary.org/wiki/blit
+/// Copies the data of the given sprite onto the display buffer.
+/// If the sprite contains any Rgb332::INVISIBLE pixels,
+/// those pixels are skipped leaving the color in the buffer already untouched.
+/// Sprites must be in RGB332 format,
+/// which get upscaled to RGB565 when written to the buffer.
 pub fn blit(x0: i32, y0: i32, w: usize, h: usize, sprite_data: &[u8]) {
     for y in 0..h {
         if y as i32 + y0 >= LCD_HEIGHT as i32 {
@@ -43,6 +61,13 @@ pub fn blit(x0: i32, y0: i32, w: usize, h: usize, sprite_data: &[u8]) {
     }
 }
 
+/// See [`blit()`] for the basic concept.
+/// Here we use an offset to draw from a larger sprite sheet.
+///
+/// NOTE: You must always export sprite sheets as "vertical strip".
+/// Vertical strips have the convenient effect of skipping entire frames,
+/// simply by specifying the sprite size * frames to be skipped * 1 byte,
+/// which gives us a direct buffer starting index.
 pub fn blit_from_offset(x0: i32, y0: i32, offset: usize, w: usize, h: usize, sprite_data: &[u8]) {
     for y in 0..h {
         if y as i32 + y0 >= LCD_HEIGHT as i32 {
@@ -71,6 +96,8 @@ pub fn blit_from_offset(x0: i32, y0: i32, offset: usize, w: usize, h: usize, spr
     }
 }
 
+/// Replaces the entire display buffer with the given RGB332 color.
+/// The RGB332 color wll be upscaled to RGB565 then that is written to the buffer.
 pub fn flood(color: Rgb332) {
     let color_index = color.into_usize();
     let mapped_color = RGB_332_TO_565[color_index];
@@ -79,6 +106,7 @@ pub fn flood(color: Rgb332) {
     }
 }
 
+/// Draws a "filled rectangle" onto the display buffer.
 pub fn fill_rect(x0: i32, y0: i32, w: usize, h: usize, color: Rgb332) {
     let ext_color = RGB_332_TO_565[color.into_usize()];
 
@@ -102,6 +130,7 @@ pub fn fill_rect(x0: i32, y0: i32, w: usize, h: usize, color: Rgb332) {
     }
 }
 
+/// Draws a horizontally-aligned solid line onto the display buffer.
 pub fn h_solid_line(x0: i32, y0: i32, w: usize, color: Rgb332) {
     if y0 < 0 || y0 >= LCD_HEIGHT as i32 {
         return;
@@ -109,6 +138,7 @@ pub fn h_solid_line(x0: i32, y0: i32, w: usize, color: Rgb332) {
     fill_rect(x0, y0, w, 1, color)
 }
 
+/// Draws a vertically-aligned solid line into the display buffer.
 pub fn v_solid_line(x0: i32, y0: i32, h: usize, color: Rgb332) {
     if x0 < 0 || x0 >= LCD_WIDTH as i32 {
         return;
@@ -116,6 +146,7 @@ pub fn v_solid_line(x0: i32, y0: i32, h: usize, color: Rgb332) {
     fill_rect(x0, y0, 1, h, color)
 }
 
+/// Draws an "empty rectangle" into the display buffer.
 pub fn solid_line_rect(x0: i32, y0: i32, w: usize, h: usize, color: Rgb332) {
     h_solid_line(x0, y0, w, color);
     h_solid_line(x0, y0 + h as i32 - 1, w, color);
@@ -124,6 +155,11 @@ pub fn solid_line_rect(x0: i32, y0: i32, w: usize, h: usize, color: Rgb332) {
     v_solid_line(x0 + w as i32 - 1, y0, h, color);
 }
 
+/// Draws a horizontally-aligned line into the display buffer.
+/// This line will be dithered at 50% density,
+/// meaning only every odd pixel will be drawn,
+/// while the others are skipped.
+/// Use the `inverted` flag to swap to drawing on even pixels.
 pub fn h_dithered_line(x0: i32, y0: i32, w: usize, color: Rgb332, inverted: bool) {
     if y0 < 0 || y0 >= LCD_HEIGHT as i32 {
         return;
@@ -147,6 +183,8 @@ pub fn h_dithered_line(x0: i32, y0: i32, w: usize, color: Rgb332, inverted: bool
     }
 }
 
+/// Draws a horizontally-aligned line with dithering.
+/// See [`h_dithered_line`] for the basic concept.
 pub fn v_dithered_line(x0: i32, y0: i32, h: usize, color: Rgb332, inverted: bool) {
     if x0 < 0 || x0 >= LCD_WIDTH as i32 {
         return;
@@ -257,6 +295,7 @@ fn fancy_border_edge(x0: i32, y0: i32, length: usize, orientation: FancyBorderEd
     }
 }
 
+/// Creates a rectangle with a "fancy" border.
 pub fn fancy_border(x0: i32, y0: i32, w: usize, h: usize) {
     let y1 = y0 + (h - FANCY_BORDER_THICKNESS) as i32;
     let x1 = x0 + (w - FANCY_BORDER_THICKNESS) as i32;

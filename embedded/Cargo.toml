@@ -4,27 +4,33 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-embedded-hal = { version = "0.2.5", features = ["unproven"] }
+# CPU peripheral access and intrinsics
 cortex-m = "0.7.2"
+# Startup code and interrupt handling
 cortex-m-rt = { version = "0.7.3", features = ["device"] }
-rp2040-boot2 = "0.2.1"
-st7735-lcd = "0.9.0"
-embedded-time = "0.12.1"
+# CANDIDATE FOR REMOVAL
+# Testing shows that the set_pixels(_buffered) & write_pixels(_buffered) do not obey the visible bounds check
+# Could potentially be solved by expanding the buffer for the extra width or a manual line writer
 embedded-graphics = "0.8.1"
-fugit = "0.3.7"
-defmt-rtt = "0.4.0"
-waveshare-rp2040-lcd-0-96 = "0.6.0"
-debugless-unwrap = "0.0.4"
+# Necessary for gpio & pwm management
+embedded-hal = { version = "0.2.5", features = ["unproven"] }
+# Necessary for storing strings without dynamic allocation
 fixedstr = { version = "0.4.3", default-features = false }
+# Necessary for the rp2040_hal i2c & spi interfaces
+fugit = "0.3.7"
+# Provides a boot script to boot from EEPROM
+rp2040-boot2 = "0.2.1"
+# Provides the RP2040 CPU specific hardware access layer
+rp2040-hal = { version = "0.8.0", features = ["rt"] }
+# Simplifies communication with the ST7735 LCD module
+st7735-lcd = "0.9.0"
 
 [[bin]]
 name = "pico-pet"
 path = "src/main.rs"
 
 [profile.release]
-# s-level optimization breaks the reboot() function???
-# opt-level = 's'
-opt-level = 3
+opt-level = 's'
 lto = true
 overflow-checks = false
 debug = false

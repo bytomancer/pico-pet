@@ -1,3 +1,6 @@
+/// # Settings scene
+/// Allows the user to modify all the settings.
+/// For settings to persist, they must be written to NVM.
 use crate::game::audio::audio_library::AudioId;
 use crate::game::audio::audio_player::AudioPlayer;
 use crate::game::audio::audio_player::AutoPlayMode;
@@ -13,8 +16,10 @@ use crate::game::scenes::SceneType;
 use super::setting_components::SettingComponent;
 use super::setting_selected::SettingSelected;
 
+/// Height to push the first UI element down from the top of the screen.
 const SETTING_HEIGHT_OFFSET: i32 = 10;
-const SETTINGS_DRAWN: i32 = 5;
+/// How many settings can fit on the screen.
+const SETTINGS_ON_SCREEN_COUNT: i32 = 5;
 
 pub struct SettingsScene {
     frame_count: u32,
@@ -92,7 +97,7 @@ impl SceneBehavior for SettingsScene {
 
         self.display_more_arrows();
 
-        for i in 0..SETTINGS_DRAWN {
+        for i in 0..SETTINGS_ON_SCREEN_COUNT {
             let sel_i = i + self.scroll_offset;
             let enabled = sel_i == self.setting_selected as i32;
             self.setting_components[sel_i as usize].draw(24 + 2 + 16 * i as i32, enabled);
@@ -175,13 +180,16 @@ impl SettingsScene {
             self.setting_highlighted = self.setting_highlighted.next().clone();
             if self.setting_highlighted as usize == 0 {
                 self.scroll_offset = 0;
-            } else if (self.setting_highlighted as i32) >= self.scroll_offset + SETTINGS_DRAWN {
+            } else if (self.setting_highlighted as i32)
+                >= self.scroll_offset + SETTINGS_ON_SCREEN_COUNT
+            {
                 self.scroll_offset += 1;
             }
         } else if input.get_state(&KeyNames::Left).just_pressed {
             self.setting_highlighted = self.setting_highlighted.prev().clone();
             if self.setting_highlighted as usize == SettingSelected::MAX_VALUE as usize {
-                self.scroll_offset = SettingSelected::MAX_VALUE as i32 - SETTINGS_DRAWN as i32 + 1;
+                self.scroll_offset =
+                    SettingSelected::MAX_VALUE as i32 - SETTINGS_ON_SCREEN_COUNT as i32 + 1;
             } else if (self.setting_highlighted as i32) < self.scroll_offset {
                 self.scroll_offset -= 1;
             }
@@ -202,7 +210,7 @@ impl SettingsScene {
         };
 
         let y_cursor_offset = self.setting_to_y_offset(setting);
-        text_writer::draw_text(
+        text_writer::draw_text_left_aligned_nowrap(
             10,
             SETTING_HEIGHT_OFFSET + 8 * 2 + 8 * y_cursor_offset + 0,
             FontStyle::Icon,
@@ -217,8 +225,11 @@ impl SettingsScene {
         let phase = self.frame_count as usize / animation_frames % offset_cycle.len();
         let cycle_position = offset_cycle[phase];
         let top_arrow_offset = SETTING_HEIGHT_OFFSET + 8 + 1 - cycle_position as i32;
-        let bottom_arrow_offset =
-            SETTING_HEIGHT_OFFSET + 8 * 2 + 8 * 2 * SETTINGS_DRAWN + 1 + cycle_position as i32;
+        let bottom_arrow_offset = SETTING_HEIGHT_OFFSET
+            + 8 * 2
+            + 8 * 2 * SETTINGS_ON_SCREEN_COUNT
+            + 1
+            + cycle_position as i32;
 
         if self.scroll_offset != 0 {
             text_writer::draw_text_centered(
@@ -229,7 +240,9 @@ impl SettingsScene {
                 "kl",
             );
         }
-        if self.scroll_offset != SettingSelected::MAX_VALUE as i32 - SETTINGS_DRAWN as i32 + 1 {
+        if self.scroll_offset
+            != SettingSelected::MAX_VALUE as i32 - SETTINGS_ON_SCREEN_COUNT as i32 + 1
+        {
             text_writer::draw_text_centered(
                 LCD_WIDTH as i32 / 2,
                 bottom_arrow_offset,

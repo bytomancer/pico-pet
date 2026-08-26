@@ -3,18 +3,29 @@ use crate::game::display::render;
 use crate::game::display::text_writer;
 use crate::game::display::text_writer::FontStyle;
 use crate::game::display_helper::top_bar::draw_top_bar;
+use crate::game::globals;
 use crate::game::hardware::hardware::BRIGHTNESS_LUT;
 use crate::game::hardware::hardware::LCD_HEIGHT;
 use crate::game::hardware::hardware::LCD_WIDTH;
 use crate::game::hardware::input::KeyNames;
 use crate::game::scenes::main_scene::MainScene;
-use crate::game::scenes::SceneType;
+use crate::game::APPROXIMATE_FRAME_RATE;
 
 use super::scene_manager::SceneManager;
 
-const APPROX_FRAMES_PER_SECOND: usize = 21;
-const SECONDS_UNTIL_IDLE: usize = 60 * APPROX_FRAMES_PER_SECOND;
+const SECONDS_UNTIL_IDLE: usize = 60;
+const FRAMES_UNTIL_IDLE: usize = SECONDS_UNTIL_IDLE * APPROXIMATE_FRAME_RATE as usize;
 
+/// The core game loop
+/// Does some game setup first
+/// Draws a blue frame to the screen
+///
+/// On every frame,
+/// idle checking is done,
+/// then the screen floods w/ black,
+/// the scene manager performs the full tick on the active scene,
+/// the screen is swapped,
+/// and lastly the scene manager checks for and performs any state transitions.
 pub fn primary_main_loop() -> ! {
     let mut scene_manager = SceneManager::default();
     scene_manager.game_play_scene = Some(MainScene::default());
@@ -28,67 +39,68 @@ pub fn primary_main_loop() -> ! {
 
     loop {
         check_feeding_deadline_is_passed();
-        // Disable the timer during the pomo scene
-        match scene_manager.active_scene {
-            SceneType::Pomo | SceneType::Intro => {
-                idle_frame_counter = 0;
+
+        // TODO: move idle to its own state on top of the current state
+        {
+            let input = crate::game::globals::get_input();
+            let hardware = crate::game::globals::get_hardware();
+
+            if scene_manager.is_current_scene_unidleable() {
+                idle_frame_counter = 0
             }
-            _ => {}
+
+            let any_key_pressed = hardware.key0_pressed()
+                || hardware.key1_pressed()
+                || hardware.key2_pressed()
+                || hardware.key3_pressed();
+            if idle_frame_counter >= FRAMES_UNTIL_IDLE {
+                input.force_reset();
+                if any_key_pressed {
+                    // next frame will return from idle state
+                    idle_frame_counter = 0;
+                    // wait for the user to release all keys
+                    while hardware.key0_pressed()
+                        || hardware.key1_pressed()
+                        || hardware.key2_pressed()
+                        || hardware.key3_pressed()
+                    {}
+                }
+                let lowest_brightness = BRIGHTNESS_LUT[0];
+                // Can't draw a fully black frame
+                render::flood(Rgb332::DARKEST_BLUE);
+
+                let x = LCD_WIDTH as i32 / 2;
+                let y = LCD_HEIGHT as i32 / 2 - FontStyle::Big.get_glyph_dimensions().1 as i32 / 2;
+                let time = hardware.get_time();
+
+                let time_str = time.hh_mm_str();
+
+                text_writer::draw_text_centered(
+                    x,
+                    y,
+                    text_writer::FontStyle::Big,
+                    Rgb332::WHITE,
+                    time_str.as_str(),
+                );
+                hardware.set_backlight_raw(lowest_brightness);
+                hardware.end_tone();
+                crate::game::display::render::draw_buffer_to_screen(&mut hardware.display);
+
+                // hardware.wfi();
+
+                continue;
+            } else if any_key_pressed {
+                idle_frame_counter = 0;
+            } else {
+                idle_frame_counter += 1;
+            }
         }
 
-        let input = crate::game::globals::get_input();
-        let hardware = crate::game::globals::get_hardware();
-
-        let any_key_pressed = hardware.key0_pressed()
-            || hardware.key1_pressed()
-            || hardware.key2_pressed()
-            || hardware.key3_pressed();
-        if idle_frame_counter >= SECONDS_UNTIL_IDLE {
-            input.force_reset();
-            if any_key_pressed {
-                // next frame will return from idle state
-                idle_frame_counter = 0;
-                // wait for the user to release all keys
-                while hardware.key0_pressed()
-                    || hardware.key1_pressed()
-                    || hardware.key2_pressed()
-                    || hardware.key3_pressed()
-                {}
-            }
-            let lowest_brightness = BRIGHTNESS_LUT[0];
-            // Can't draw a fully black frame
-            render::flood(Rgb332::DARKEST_BLUE);
-
-            let x = LCD_WIDTH as i32 / 2;
-            let y = LCD_HEIGHT as i32 / 2 - FontStyle::Big.get_glyph_dimensions().1 as i32 / 2;
-            let time = hardware.get_time();
-
-            let time_str = time.hh_mm_str();
-
-            text_writer::draw_text_centered(
-                x,
-                y,
-                text_writer::FontStyle::Big,
-                Rgb332::WHITE,
-                time_str.as_str(),
-            );
-            hardware.set_backlight_raw(lowest_brightness);
-            hardware.end_tone();
-            crate::game::display::render::draw(&mut hardware.display);
-
-            // hardware.wfi();
-
-            continue;
-        } else if any_key_pressed {
-            idle_frame_counter = 0;
-        } else {
-            idle_frame_counter += 1;
-        }
-
-        input.update();
+        globals::get_input().update();
 
         render::flood(Rgb332::BLACK);
 
+        // TODO: some scenes don't have this, don't bother drawing it
         draw_top_bar();
         scene_manager.update_and_draw();
 
@@ -114,7 +126,8 @@ fn check_feeding_deadline_is_passed() -> () {
 
     if now > feeding_deadline {
         perform_starve();
-        // nvm.pet.is_hungry = true; // TODO: reconsider?
+        // TODO: reconsider this?
+        // nvm.pet.is_hungry = true;
         // nvm.pet.is_starved = true;
         // } else if now > feeding_warning {
         //     nvm.pet.is_hungry = true;
@@ -135,8 +148,9 @@ fn perform_starve() {
     // nvm.pet.set
 }
 
+/// Performs a double-buffered frame swap
 fn swap() {
     let hardware = crate::game::globals::get_hardware();
     hardware.set_backlight_from_lut();
-    crate::game::display::render::draw(&mut hardware.display);
+    crate::game::display::render::draw_buffer_to_screen(&mut hardware.display);
 }

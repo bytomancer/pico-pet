@@ -28,3 +28,7 @@ build:
 # Build and upload the ARM UF2 to an attached pico
 run:
 	cd embedded && make run
+
+# Delete build artifacts
+clean:
+	cd embedded && cargo clean

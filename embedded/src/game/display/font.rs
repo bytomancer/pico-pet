@@ -4,6 +4,9 @@ use crate::game::color::Rgb332;
 use crate::game::display::render;
 use crate::game::hardware::hardware::LCD_WIDTH;
 
+/// We currently support the following font sizes,
+/// specified as SizeWxH.
+/// Fonts must be black & white images with a fixed grid of the specified size.
 pub enum FontSize {
     Size5x8,
     Size8x13,
@@ -23,6 +26,13 @@ impl FontSize {
     }
 }
 
+/// An object representing a font
+/// Has a FontSize metadata,
+/// then the data itself.
+///
+/// When drawing a font, glyphs must be aligned per ISO_8859_13,
+/// starting from ASCII 0x20, ending at ASCII 0x7F.
+/// ex: https://docs.rs/embedded-graphics/latest/embedded_graphics/mono_font/iso_8859_13/index.html
 pub struct Font<'a> {
     pub size: FontSize,
     data: &'a [u8],
@@ -40,6 +50,13 @@ impl<'a> Font<'a> {
         (r << 5) ^ (g << 2) ^ b
     }
 
+    /// Displays text to the screen
+    /// The color argument provides a starting color,
+    /// however you can actually change the color mid string using:
+    /// r#"This text is \c800red\c000 but now it's black."#;
+    /// Additionally, the \n newline will wrap the text.
+    /// There is a `wrap` flag on this function,
+    /// which when true will wrap if a glyph goes off screen.
     pub fn draw_text(&self, x0: i32, y0: i32, color: Rgb332, text: &str, wrap: bool) {
         let mut x = x0;
         let mut y = y0;
@@ -87,12 +104,17 @@ impl<'a> Font<'a> {
         }
     }
 
+    /// Returns the x & y glyph coordinates of any char.
+    /// These are the glyph glyph coordinates,
+    /// so you may want to multiply them by glyph size!
     fn font_lookup(c: char) -> (usize, usize) {
         let x = (c as usize - 32) % 16;
         let y = (c as usize - 32) / 16;
         (x, y)
     }
 
+    /// Rasterizes a 5x8 glyph into a temporary RGB332 5 wide 8 tall texture,
+    /// then blits the texture into the display buffer.
     fn build_5x8_glyph(&self, x: i32, y: i32, c: char, bg_color: Rgb332, fg_color: Rgb332) {
         let mut glyph = [bg_color.into_u8(); 5 * 8];
         let (glyph_x0, glyph_y0) = Self::font_lookup(c);
@@ -111,6 +133,8 @@ impl<'a> Font<'a> {
         render::blit(x, y, 5, 8, &glyph)
     }
 
+    /// Rasterizes an 8x13 glyph into a temporary RGB332 5 wide 8 tall texture,
+    /// then blits the texture into the display buffer.
     fn build_8x13_glyph(&self, x: i32, y: i32, c: char, bg_color: Rgb332, fg_color: Rgb332) {
         let mut glyph = [bg_color.into_u8(); 8 * 13];
         let (glyph_x0, glyph_y0) = Self::font_lookup(c);
@@ -128,8 +152,8 @@ impl<'a> Font<'a> {
     }
 }
 
+/// The FontFactory is where you can load new fonts for the game.
 pub struct FontFactory;
-
 impl FontFactory {
     pub fn new_small_font() -> Font<'static> {
         Font::new(

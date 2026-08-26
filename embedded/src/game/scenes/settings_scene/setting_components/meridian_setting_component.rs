@@ -40,21 +40,21 @@ impl SettingComponentTrait for MeridianSettingComponent {
         );
         let value = self.setting.get_value();
         if value == 0 {
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Icon,
                 Rgb332::BLUE,
                 "44444444        ",
             );
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Small,
                 Rgb332::WHITE,
                 "  24hr          ",
             );
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Small,
@@ -62,21 +62,21 @@ impl SettingComponentTrait for MeridianSettingComponent {
                 "          12hr  ",
             );
         } else {
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Icon,
                 Rgb332::BLUE,
                 "        44444444",
             );
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Small,
                 Rgb332::LIGHT_GREY,
                 "  24hr          ",
             );
-            text_writer::draw_text(
+            text_writer::draw_text_left_aligned_nowrap(
                 24,
                 y_offset + 8,
                 FontStyle::Small,

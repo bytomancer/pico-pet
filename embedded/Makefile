@@ -3,6 +3,7 @@ reset := $(shell tput sgr0)
 
 build: sprites fonts tracks
 	cargo build --bin pico-pet --release
+	printf '\x00' | dd of=target/thumbv6m-none-eabi/release/pico-pet bs=1 seek=7 count=1 conv=notrunc status=none
 	@size=$$(stat -c '%s' target/thumbv6m-none-eabi/release/pico-pet); \
 	flash=$$((2048 * 1024 - 0x100)); \
 	pct=$$(( size * 100 / flash )); \

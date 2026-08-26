@@ -5,9 +5,15 @@ pub mod secondary_core;
 use self::primary_core::primary_main_loop;
 use self::secondary_core::secondary_main_loop;
 
-use waveshare_rp2040_lcd_0_96::hal::multicore::Multicore;
+use rp2040_hal::multicore::Multicore;
 
+/// Sets up and starts the secondary core.
+/// The second core runs `secondary_main_loop` indefinitely.
+/// There is a limited size stack for the secondary core.
+/// See CORE1_STACK for more information.
+#[allow(unused)]
 pub fn spawn_secondary_core_worker() {
+    // TODO (Release): Remove entire function if unused
     unsafe {
         let hardware = crate::game::globals::get_hardware();
         let mut mc = Multicore::new(

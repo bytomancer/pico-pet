@@ -1,5 +1,3 @@
-// use core::{cmp, ops::Sub};
-
 use core::cmp;
 
 use fixedstr::str_format;
@@ -7,8 +5,6 @@ use fixedstr::str_format;
 use crate::game::nvm::settings::SettingType::UseMeridian;
 
 use super::meridian::Meridian;
-
-// use super::{interval_time::IntervalTime, meridian::Meridian};
 
 #[derive(Copy, Clone)]
 pub struct RealTime {
