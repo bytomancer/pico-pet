@@ -35,7 +35,14 @@ use crate::game::hardware::rtc::RealDate;
 use crate::game::hardware::rtc::RealDateTime;
 
 pub const LCD_WIDTH: usize = 128;
-pub const LCD_HEIGHT: usize = 128;
+pub const LCD_HEIGHT: usize = 160;
+
+const RTC_ADDRESS: u8 = 0x68;
+
+// For the module from Amazon
+// const NVM_ADDRESS: u8 = 0x57;
+// For my custom module with flipped bits, whoops
+// const NVM_ADDRESS: u8 = 0b_0_1010_000;
 
 pub const BRIGHTNESS_LUT: [u16; 16] = [
     306, 438, 626, 895, 1281, 1831, 2619, 3746, 5357, 7660, 10955, 15667, 22406, 32043, 45825,
@@ -67,17 +74,36 @@ type BuzzerPinChannel = rp2040_hal::pwm::Channel<
 >;
 type BuzzerPwmSlice = rp2040_hal::pwm::Slice<rp2040_hal::pwm::Pwm2, rp2040_hal::pwm::FreeRunning>;
 
-type Key0Pin = hal::gpio::Pin<hal::gpio::bank0::Gpio15, hal::gpio::Input<hal::gpio::PullUp>>;
-type Key1Pin = hal::gpio::Pin<hal::gpio::bank0::Gpio17, hal::gpio::Input<hal::gpio::PullUp>>;
-type Key1AltPin = hal::gpio::Pin<hal::gpio::bank0::Gpio29, hal::gpio::Input<hal::gpio::PullUp>>;
-type Key2Pin = hal::gpio::Pin<hal::gpio::bank0::Gpio2, hal::gpio::Input<hal::gpio::PullUp>>;
-type Key3Pin = hal::gpio::Pin<hal::gpio::bank0::Gpio3, hal::gpio::Input<hal::gpio::PullUp>>;
-type Key5Pin = hal::gpio::Pin<hal::gpio::bank0::Gpio5, hal::gpio::Input<hal::gpio::PullUp>>;
+type Key0Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio16,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
+type Key1Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio17,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
+type Key2Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio18,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
+type Key3Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio19,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
+type Key5Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio5,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
 
-// type VsenseEnablePin = rp2040_hal::gpio::Pin<
-//     rp2040_hal::gpio::bank0::Gpio22,
-//     rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>,
-// >;
+type Adc0Pin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio26,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::Floating>,
+>;
+
+type VsenseEnablePin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio22,
+    rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>,
+>;
 
 type VibePin = rp2040_hal::gpio::Pin<
     rp2040_hal::gpio::bank0::Gpio6,
@@ -118,7 +144,7 @@ pub struct HardwareComponents {
     pub i2c_bus: I2CBus,
     pub adc: Adc,
     pub vsense_pin: Adc0Pin,
-    // pub vsense_enable_pin: VsenseEnablePin,
+    pub vsense_enable_pin: VsenseEnablePin,
     pub nvm_addr: u8,
 }
 impl HardwareComponents {
@@ -184,13 +210,14 @@ impl HardwareComponents {
             (*buzzer_pwm_slice_ptr).set_top(0);
             (*buzzer_pwm_slice_ptr).enable();
 
-            let key0 = pins.gpio15.into_pull_up_input();
-            let key1 = pins.gpio17.into_pull_up_input();
-            let key1_alt = pins.gpio29.into_pull_up_input();
-            let key2 = pins.gpio2.into_pull_up_input();
-            let key3 = pins.gpio3.into_pull_up_input();
+            let key0: Key0Pin = pins.gpio16.into_pull_up_input();
+            let key1: Key1Pin = pins.gpio17.into_pull_up_input();
+            let key2: Key2Pin = pins.gpio18.into_pull_up_input();
+            let key3: Key3Pin = pins.gpio19.into_pull_up_input();
+            let key5: Key5Pin = pins.gpio5.into_pull_up_input();
 
-            let second_clock = pins.gpio5.into_pull_up_input();
+            let mut vsense_enable_pin = pins.gpio22.into_push_pull_output();
+            vsense_enable_pin.set_low().unwrap();
 
             let adc: Adc = Adc::new(pac.ADC, &mut pac.RESETS);
             let vsense_pin = pins.gpio26.into_floating_input();
@@ -247,7 +274,7 @@ impl HardwareComponents {
             let spi = spi.init(
                 &mut pac.RESETS,
                 clocks.peripheral_clock.freq(),
-                10.MHz(),
+                33.MHz(),
                 &embedded_hal::spi::MODE_0,
             );
 
@@ -303,6 +330,8 @@ impl HardwareComponents {
                 panic!("No NVM detected.");
             }
 
+            vsense_enable_pin.set_low().unwrap();
+
             let mut s = Self {
                 display,
                 sys_freq,
@@ -322,7 +351,7 @@ impl HardwareComponents {
                 i2c_bus,
                 adc,
                 vsense_pin,
-                // vsense_enable_pin,
+                vsense_enable_pin,
                 nvm_addr,
             };
 
@@ -336,7 +365,7 @@ impl HardwareComponents {
     }
 
     pub fn get_vsense(&mut self) -> u16 {
-        // self.vsense_enable_pin.set_high().unwrap();
+        // self.vsense_enable_pin.set_low().unwrap();
         let r = <Adc as embedded_hal::prelude::_embedded_hal_adc_OneShot<
             Adc,
             u16,
@@ -544,18 +573,18 @@ impl HardwareComponents {
         self.delay.delay_ms(5);
     }
 
-    pub fn init_wfi(&mut self) {
-        self.key3
-            .set_interrupt_enabled(hal::gpio::Interrupt::EdgeLow, true);
-        self.second_clock
-            .set_interrupt_enabled(hal::gpio::Interrupt::EdgeHigh, true);
+    // pub fn init_wfi(&mut self) {
+    //     self.key3
+    //         .set_interrupt_enabled(hal::gpio::Interrupt::EdgeLow, true);
+    //     self.second_clock
+    //         .set_interrupt_enabled(hal::gpio::Interrupt::EdgeHigh, true);
 
-        unsafe {
-            NVIC::unmask(Interrupt::IO_IRQ_BANK0);
-        }
-    }
+    //     unsafe {
+    //         NVIC::unmask(Interrupt::IO_IRQ_BANK0);
+    //     }
+    // }
 
-    pub fn wfi(&self) {
-        wfi();
-    }
+    // pub fn wfi(&self) {
+    //     wfi();
+    // }
 }

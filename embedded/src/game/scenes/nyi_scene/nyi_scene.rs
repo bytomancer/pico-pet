@@ -8,8 +8,6 @@ use crate::game::display::text_writer;
 use crate::game::display::text_writer::draw_text_left_aligned_nowrap;
 use crate::game::display::text_writer::FontStyle;
 use crate::game::hardware::input::KeyNames;
-use crate::game::hardware::rtc::real_date_time::RealDateTime;
-use crate::game::hardware::rtc::real_time::RealTime;
 use crate::game::hardware::rtc::RealDate;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
@@ -20,19 +18,6 @@ pub struct NyiScene {
     next_scene: Option<SceneType>,
     running_bat_readings: [u16; NUM_BAT_SAMPLES],
     bat_reading_i: usize,
-    frame_count: usize,
-    fps: usize,
-}
-impl Default for NyiScene {
-    fn default() -> Self {
-        Self {
-            next_scene: None,
-            running_bat_readings: [0; NUM_BAT_SAMPLES],
-            bat_reading_i: 0,
-            frame_count: 0,
-            fps: 0,
-        }
-    }
     frame_count: usize,
     fps: usize,
 }
@@ -58,14 +43,9 @@ impl SceneBehavior for NyiScene {
             self.fps = self.frame_count;
             self.frame_count = 0;
         }
-        if input.get_state(&KeyNames::Clock).just_released {
-            self.fps = self.frame_count;
-            self.frame_count = 0;
-        }
     }
 
     fn tick(&mut self) {
-        self.frame_count += 1;
         self.frame_count += 1;
     }
 
@@ -77,35 +57,30 @@ impl SceneBehavior for NyiScene {
     fn draw(&mut self) {
         text_writer::full_dialog_box("NOT IMPL", "");
 
-        let input = crate::game::globals::get_input();
-        if !input.get_state(&KeyNames::Clock).just_released {
-            // limit checks to 1hz
-            // return;
-        }
         let hardware = crate::game::globals::get_hardware();
-        let nvm = crate::game::globals::get_nvm();
-        nvm.pet.is_hungry = false;
+        // let nvm = crate::game::globals::get_nvm();
+        // nvm.pet.is_hungry = false;
         let now = crate::game::globals::get_hardware().get_date_time();
         // let time_hr = now.time.hr;
         // let time_min = now.time.min;
-        let (feeding_deadline_hr, feeding_deadline_min) = nvm.settings.get_feeding_deadline();
-        let mut last_fed = nvm.pet.get_last_fed_date();
-        last_fed.inc_by_1_day();
+        // let (feeding_deadline_hr, feeding_deadline_min) = nvm.settings.get_feeding_deadline();
+        // let mut last_fed = nvm.pet.get_last_fed_date();
+        // last_fed.inc_by_1_day();
         // let next_feed_day = fed_day + 1; // TODO: wrap around.....
         // let next_feed_mon = fed_mon;
         // let next_feed_yr = fed_yr;
 
-        let last_fed = RealDateTime {
-            date: last_fed,
-            time: RealTime {
-                // Pet feeding time is advanced to the deadline
-                hr: feeding_deadline_hr,
-                min: feeding_deadline_min,
-                sec: 0,
-            },
-        };
-        let mut next_feed = last_fed.clone();
-        next_feed.date.inc_by_1_day();
+        // let last_fed = RealDateTime {
+        //     date: last_fed,
+        //     time: RealTime {
+        //         // Pet feeding time is advanced to the deadline
+        //         hr: feeding_deadline_hr,
+        //         min: feeding_deadline_min,
+        //         sec: 0,
+        //     },
+        // };
+        // let mut next_feed = last_fed.clone();
+        // next_feed.date.inc_by_1_day();
 
         // if now.date.year_since_2k > next_feed_yr {
         //     nvm.pet.is_hungry = true;
@@ -131,11 +106,13 @@ impl SceneBehavior for NyiScene {
         //     }
         // }
 
-        nvm.pet.is_hungry = now > next_feed;
+        // nvm.pet.is_hungry = now > next_feed;
 
         let mut y = 16;
+
         draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "NOW:");
         y += 8;
+
         draw_text_left_aligned_nowrap(
             8,
             y,
@@ -153,6 +130,7 @@ impl SceneBehavior for NyiScene {
             ),
         );
         y += 8;
+
         draw_text_left_aligned_nowrap(
             8,
             y,
@@ -160,8 +138,8 @@ impl SceneBehavior for NyiScene {
             Rgb332::BLACK,
             &fixedstr::str_format!(fixedstr::str32, "{}", now.to_y2k_epoch()),
         );
+        y += 8;
 
-        // y += 8;
         // draw_text(8, y, FontStyle::Small, Rgb332::BLACK, "LAST FED:");
         // y += 8;
         // draw_text(
@@ -189,48 +167,48 @@ impl SceneBehavior for NyiScene {
         //     &fixedstr::str_format!(fixedstr::str32, "{}", last_fed.to_y2k_epoch()),
         // );
 
-        y += 8;
-        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "NEXT FEED DEADLINE:");
-        y += 8;
-        draw_text_left_aligned_nowrap(
-            8,
-            y,
-            FontStyle::Small,
-            Rgb332::BLACK,
-            &fixedstr::str_format!(
-                fixedstr::str32,
-                "{}-{:02}-{:02} {:02}:{:02}:{:02}",
-                next_feed.date.year_since_2k as u16 + RealDate::ZERO_YEAR,
-                next_feed.date.month,
-                next_feed.date.day_of_month,
-                feeding_deadline_hr,
-                feeding_deadline_min,
-                0
-            ),
-        );
-        y += 8;
-        draw_text_left_aligned_nowrap(
-            8,
-            y,
-            FontStyle::Small,
-            Rgb332::BLACK,
-            &fixedstr::str_format!(fixedstr::str32, "{}", next_feed.to_y2k_epoch()),
-        );
+        // y += 8;
+        // draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "NEXT FEED DEADLINE:");
+        // y += 8;
+        // draw_text_left_aligned_nowrap(
+        //     8,
+        //     y,
+        //     FontStyle::Small,
+        //     Rgb332::BLACK,
+        //     &fixedstr::str_format!(
+        //         fixedstr::str32,
+        //         "{}-{:02}-{:02} {:02}:{:02}:{:02}",
+        //         next_feed.date.year_since_2k as u16 + RealDate::ZERO_YEAR,
+        //         next_feed.date.month,
+        //         next_feed.date.day_of_month,
+        //         feeding_deadline_hr,
+        //         feeding_deadline_min,
+        //         0
+        //     ),
+        // );
+        // y += 8;
+        // draw_text_left_aligned_nowrap(
+        //     8,
+        //     y,
+        //     FontStyle::Small,
+        //     Rgb332::BLACK,
+        //     &fixedstr::str_format!(fixedstr::str32, "{}", next_feed.to_y2k_epoch()),
+        // );
 
-        y += 8;
-        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "HUNGRY?:");
-        y += 8;
-        draw_text_left_aligned_nowrap(
-            8,
-            y,
-            FontStyle::Small,
-            Rgb332::BLACK,
-            &fixedstr::str_format!(
-                fixedstr::str32,
-                "{}",
-                if nvm.pet.is_hungry { "YES" } else { "NO" }
-            ),
-        );
+        // y += 8;
+        // draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "HUNGRY?:");
+        // y += 8;
+        // draw_text_left_aligned_nowrap(
+        //     8,
+        //     y,
+        //     FontStyle::Small,
+        //     Rgb332::BLACK,
+        //     &fixedstr::str_format!(
+        //         fixedstr::str32,
+        //         "{}",
+        //         if nvm.pet.is_hungry { "YES" } else { "NO" }
+        //     ),
+        // );
 
         self.bat_reading_i += 1;
         if self.bat_reading_i >= self.running_bat_readings.len() {
@@ -257,7 +235,7 @@ impl SceneBehavior for NyiScene {
         );
 
         y += 8;
-        draw_text(
+        draw_text_left_aligned_nowrap(
             8,
             y,
             FontStyle::Small,
