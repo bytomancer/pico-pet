@@ -274,7 +274,7 @@ impl HardwareComponents {
             let spi = spi.init(
                 &mut pac.RESETS,
                 clocks.peripheral_clock.freq(),
-                33.MHz(),
+                32.MHz(),
                 &embedded_hal::spi::MODE_0,
             );
 
@@ -364,21 +364,39 @@ impl HardwareComponents {
         }
     }
 
-    pub fn get_vsense(&mut self) -> u16 {
-        // self.vsense_enable_pin.set_low().unwrap();
-        let r = <Adc as embedded_hal::prelude::_embedded_hal_adc_OneShot<
+    /// Returns a u16 between 0 and 4096
+    fn perform_vsense_read(&mut self) -> u16 {
+        <Adc as embedded_hal::prelude::_embedded_hal_adc_OneShot<
             Adc,
             u16,
             rp2040_hal::gpio::Pin<
                 rp2040_hal::gpio::bank0::Gpio26,
                 rp2040_hal::gpio::Input<rp2040_hal::gpio::Floating>,
             >,
-        >>::read(&mut self.adc, &mut self.vsense_pin);
-        // self.vsense_enable_pin.set_low().unwrap();
-        match r {
-            Ok(val) => val,
-            Err(_) => 0,
+        >>::read(&mut self.adc, &mut self.vsense_pin)
+        .unwrap_or(0)
+    }
+
+    /// An internal capacitance issue can cause flaky readings,
+    /// so we discard 4 and average the next 16 readings
+    /// The return is the sum of all 16
+    /// You may wish to divide/shift it down to a more meaningful number
+    pub fn get_vsense(&mut self) -> u16 {
+        let disregarded_readings = 4;
+        for _ in 0..disregarded_readings {
+            let _ = self.perform_vsense_read();
         }
+
+        let mut reading_sum = 0;
+
+        // do not exceed 16
+        // adc uses a 12-bit digital approximation
+        // u12 * 16 fits inside a u16
+        let valid_reading_count = 16;
+        for _ in 0..valid_reading_count {
+            reading_sum += self.perform_vsense_read();
+        }
+        reading_sum
     }
 
     pub fn key0_pressed(&self) -> bool {

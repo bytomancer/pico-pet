@@ -98,6 +98,8 @@ pub fn primary_main_loop() -> ! {
 
         globals::get_input().update();
 
+        globals::get_battery().update_readings();
+
         render::flood(Rgb332::BLACK);
 
         // TODO: some scenes don't have this, don't bother drawing it

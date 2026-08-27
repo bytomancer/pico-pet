@@ -1,4 +1,5 @@
 use crate::game::display;
+use crate::game::hardware::battery::BatteryState;
 use crate::game::hardware::hardware::HardwareComponents;
 use crate::game::hardware::input::InputHandler;
 use crate::game::nvm::Nvm;
@@ -6,6 +7,7 @@ use crate::game::nvm::Nvm;
 static mut HARDWARE: Option<HardwareComponents> = None;
 static mut INPUT: Option<InputHandler> = None;
 static mut NVM: Option<Nvm> = None;
+static mut BATTERY: Option<BatteryState> = None;
 
 fn init_hardware() {
     unsafe { self::HARDWARE = Some(HardwareComponents::new()) }
@@ -19,6 +21,10 @@ fn init_nvm() {
     unsafe { self::NVM = Some(Nvm::load_or_create_default()) }
 }
 
+fn init_battery() {
+    unsafe { self::BATTERY = Some(BatteryState::default()) }
+}
+
 /// Initialize all the globals required by the game
 /// Initialize the RP2040 hardware
 /// Then either loads or initializes a fresh save file from NVM
@@ -28,6 +34,7 @@ pub fn init_globals() {
     self::init_hardware();
     self::init_nvm();
     self::init_input();
+    self::init_battery();
 
     display::text_writer::init_singleton_fonts();
 }
@@ -51,4 +58,9 @@ pub fn get_input() -> &'static mut InputHandler {
 #[allow(static_mut_refs)]
 pub fn get_nvm() -> &'static mut Nvm {
     unsafe { self::NVM.as_mut().unwrap() }
+}
+/// Mutably reference the battery global.
+#[allow(static_mut_refs)]
+pub fn get_battery() -> &'static mut BatteryState {
+    unsafe { self::BATTERY.as_mut().unwrap() }
 }

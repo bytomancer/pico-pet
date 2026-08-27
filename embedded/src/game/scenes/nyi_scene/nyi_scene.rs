@@ -12,12 +12,12 @@ use crate::game::hardware::rtc::RealDate;
 use crate::game::scenes::SceneBehavior;
 use crate::game::scenes::SceneType;
 
-const NUM_BAT_SAMPLES: usize = 32;
+// const NUM_BAT_SAMPLES: usize = 32;
 
 pub struct NyiScene {
     next_scene: Option<SceneType>,
-    running_bat_readings: [u16; NUM_BAT_SAMPLES],
-    bat_reading_i: usize,
+    // running_bat_readings: [u16; NUM_BAT_SAMPLES],
+    // bat_reading_i: usize,
     frame_count: usize,
     fps: usize,
 }
@@ -25,8 +25,8 @@ impl Default for NyiScene {
     fn default() -> Self {
         Self {
             next_scene: None,
-            running_bat_readings: [0; NUM_BAT_SAMPLES],
-            bat_reading_i: 0,
+            // running_bat_readings: [0; NUM_BAT_SAMPLES],
+            // bat_reading_i: 0,
             frame_count: 0,
             fps: 0,
         }
@@ -57,7 +57,7 @@ impl SceneBehavior for NyiScene {
     fn draw(&mut self) {
         text_writer::full_dialog_box("NOT IMPL", "");
 
-        let hardware = crate::game::globals::get_hardware();
+        // let hardware = crate::game::globals::get_hardware();
         // let nvm = crate::game::globals::get_nvm();
         // nvm.pet.is_hungry = false;
         let now = crate::game::globals::get_hardware().get_date_time();
@@ -210,18 +210,21 @@ impl SceneBehavior for NyiScene {
         //     ),
         // );
 
-        self.bat_reading_i += 1;
-        if self.bat_reading_i >= self.running_bat_readings.len() {
-            self.bat_reading_i = 0;
-        }
-        let vsense = hardware.get_vsense();
-        self.running_bat_readings[self.bat_reading_i] = vsense;
+        // self.bat_reading_i += 1;
+        // if self.bat_reading_i >= self.running_bat_readings.len() {
+        //     self.bat_reading_i = 0;
+        // }
+        // let vsense = hardware.get_vsense();
+        // self.running_bat_readings[self.bat_reading_i] = vsense;
 
-        let mut vsense_sum: u32 = 0;
-        for vs in self.running_bat_readings.iter() {
-            vsense_sum += *vs as u32;
-        }
-        let vsense_avg = vsense_sum / NUM_BAT_SAMPLES as u32;
+        // let mut vsense_sum: u32 = 0;
+        // for vs in self.running_bat_readings.iter() {
+        //     vsense_sum += *vs as u32;
+        // }
+        // let vsense_avg = vsense_sum / NUM_BAT_SAMPLES as u32;
+
+        let battery = crate::game::globals::get_battery();
+        let vsense_avg = battery.get_average().unwrap_or(0);
 
         y += 8;
         draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "BATTERY LEVEL:");
