@@ -72,6 +72,11 @@ type BuzzerPinChannel = rp2040_hal::pwm::Channel<
     rp2040_hal::pwm::FreeRunning,
     rp2040_hal::pwm::A,
 >;
+type BuzzerNegPinChannel = rp2040_hal::pwm::Channel<
+    rp2040_hal::pwm::Pwm2,
+    rp2040_hal::pwm::FreeRunning,
+    rp2040_hal::pwm::B,
+>;
 type BuzzerPwmSlice = rp2040_hal::pwm::Slice<rp2040_hal::pwm::Pwm2, rp2040_hal::pwm::FreeRunning>;
 
 type Key0Pin = rp2040_hal::gpio::Pin<
@@ -90,8 +95,12 @@ type Key3Pin = rp2040_hal::gpio::Pin<
     rp2040_hal::gpio::bank0::Gpio19,
     rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
 >;
-type Key5Pin = rp2040_hal::gpio::Pin<
-    rp2040_hal::gpio::bank0::Gpio5,
+type HzPin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio2,
+    rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
+>;
+type ChargeIndicatorPin = rp2040_hal::gpio::Pin<
+    rp2040_hal::gpio::bank0::Gpio27,
     rp2040_hal::gpio::Input<rp2040_hal::gpio::PullUp>,
 >;
 
@@ -101,12 +110,12 @@ type Adc0Pin = rp2040_hal::gpio::Pin<
 >;
 
 type VsenseEnablePin = rp2040_hal::gpio::Pin<
-    rp2040_hal::gpio::bank0::Gpio22,
+    rp2040_hal::gpio::bank0::Gpio28,
     rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>,
 >;
 
 type VibePin = rp2040_hal::gpio::Pin<
-    rp2040_hal::gpio::bank0::Gpio6,
+    rp2040_hal::gpio::bank0::Gpio3,
     rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>,
 >;
 
@@ -130,13 +139,15 @@ pub struct HardwareComponents {
     pub sys_freq: u32,
     pub backlight_channel_ptr: *mut LcdBlPinChannel,
     pub buzzer_channel_ptr: *mut BuzzerPinChannel,
+    pub buzzer_channel_neg_ptr: *mut BuzzerNegPinChannel,
     pub buzzer_pwm_slice_ptr: *mut BuzzerPwmSlice,
     pub delay: Delay,
     pub key0: Key0Pin,
     pub key1: Key1Pin,
     pub key2: Key2Pin,
     pub key3: Key3Pin,
-    pub second_clock: Key5Pin,
+    pub second_clock: HzPin,
+    pub chg_ind_pin: ChargeIndicatorPin,
     pub vibe: VibePin,
     pub psm_ptr: *mut PSM,
     pub ppb_ptr: *mut PPB,
@@ -191,18 +202,28 @@ impl HardwareComponents {
             let buzzer_pwm_slice_ptr: *mut BuzzerPwmSlice =
                 &mut pwm_slices.pwm2 as *mut BuzzerPwmSlice;
 
-            // Output channel B on PWM6 to GPIO 13
-            let backlight_channel_ptr = &mut pwm6.channel_b as *mut LcdBlPinChannel;
-            // disable backlight ASAP to hide boot artifacts
-            (*backlight_channel_ptr).output_to(pins.gpio13);
-            (*backlight_channel_ptr).enable();
-            (*backlight_channel_ptr).set_duty(0);
+            (*buzzer_pwm_slice_ptr).channel_b.set_inverted();
 
             let buzzer_channel_ptr =
                 &mut (*buzzer_pwm_slice_ptr).channel_a as *mut BuzzerPinChannel;
             (*buzzer_channel_ptr).output_to(pins.gpio4);
             (*buzzer_channel_ptr).enable();
             (*buzzer_channel_ptr).set_duty(0);
+
+            let buzzer_channel_neg_ptr =
+                &mut (*buzzer_pwm_slice_ptr).channel_b as *mut BuzzerNegPinChannel;
+            (*buzzer_channel_neg_ptr).output_to(pins.gpio5);
+            (*buzzer_channel_neg_ptr).enable();
+            (*buzzer_channel_neg_ptr).set_duty(0);
+
+            (*buzzer_pwm_slice_ptr).set_ph_correct();
+
+            // Output channel B on PWM6 to GPIO 13
+            let backlight_channel_ptr = &mut pwm6.channel_b as *mut LcdBlPinChannel;
+            // disable backlight ASAP to hide boot artifacts
+            (*backlight_channel_ptr).output_to(pins.gpio13);
+            (*backlight_channel_ptr).enable();
+            (*backlight_channel_ptr).set_duty(0);
 
             (*buzzer_pwm_slice_ptr).set_ph_correct();
             (*buzzer_pwm_slice_ptr).set_div_int(0);
@@ -214,15 +235,16 @@ impl HardwareComponents {
             let key1: Key1Pin = pins.gpio17.into_pull_up_input();
             let key2: Key2Pin = pins.gpio18.into_pull_up_input();
             let key3: Key3Pin = pins.gpio19.into_pull_up_input();
-            let key5: Key5Pin = pins.gpio5.into_pull_up_input();
+            let key5: HzPin = pins.gpio2.into_pull_up_input();
+            let chg_ind_pin: ChargeIndicatorPin = pins.gpio27.into_pull_up_input();
 
-            let mut vsense_enable_pin = pins.gpio22.into_push_pull_output();
+            let mut vsense_enable_pin = pins.gpio28.into_push_pull_output();
             vsense_enable_pin.set_low().unwrap();
 
             let adc: Adc = Adc::new(pac.ADC, &mut pac.RESETS);
             let vsense_pin = pins.gpio26.into_floating_input();
 
-            let mut vibe = pins.gpio6.into_push_pull_output();
+            let mut vibe = pins.gpio3.into_push_pull_output();
             vibe.set_low().unwrap();
 
             let sys_freq = clocks.system_clock.freq().to_Hz();
@@ -337,6 +359,7 @@ impl HardwareComponents {
                 sys_freq,
                 backlight_channel_ptr,
                 buzzer_channel_ptr,
+                buzzer_channel_neg_ptr,
                 buzzer_pwm_slice_ptr,
                 delay,
                 key0,
@@ -344,6 +367,7 @@ impl HardwareComponents {
                 key2,
                 key3,
                 second_clock: key5,
+                chg_ind_pin,
                 vibe,
                 psm_ptr,
                 ppb_ptr,
@@ -415,6 +439,10 @@ impl HardwareComponents {
         self.key3.is_low().unwrap()
     }
 
+    pub fn charge_indicator(&self) -> bool {
+        self.chg_ind_pin.is_low().unwrap()
+    }
+
     pub fn clock_high(&self) -> bool {
         self.second_clock.is_low().unwrap()
     }
@@ -447,12 +475,25 @@ impl HardwareComponents {
         } else {
             VOLUME_LUT[volume.get_value() as usize]
         };
+
         unsafe {
             (*self.buzzer_pwm_slice_ptr).set_top(tone_settings.get_top());
             (*self.buzzer_pwm_slice_ptr).set_div_int(tone_settings.get_div_int());
             (*self.buzzer_pwm_slice_ptr).set_div_frac(tone_settings.get_div_frac());
-            (*self.buzzer_channel_ptr).set_duty(effective_volume);
+
+            if effective_volume == 0 {
+                // CHANGED: Prevent DC bias. Channel A (0) is LOW.
+                // Channel B is inverted, so pushing duty past top keeps it LOW.
+                (*self.buzzer_channel_ptr).set_duty(0);
+                (*self.buzzer_channel_neg_ptr).set_duty(tone_settings.get_top() + 1);
+            } else {
+                // NEW: Drive both pins with the volume duty cycle
+                (*self.buzzer_channel_ptr).set_duty(effective_volume);
+                (*self.buzzer_channel_neg_ptr).set_duty(effective_volume);
+            }
+
             (*self.buzzer_channel_ptr).enable();
+            (*self.buzzer_channel_neg_ptr).enable(); // NEW
         }
     }
 

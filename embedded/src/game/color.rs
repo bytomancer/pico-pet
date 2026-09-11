@@ -28,6 +28,7 @@ impl Rgb332 {
     pub const DARKEST_BLUE: Rgb332 = Rgb332(0b000_000_01);
 
     pub const YELLOW: Rgb332 = Rgb332(0b111_111_00);
+    pub const ORANGE: Rgb332 = Rgb332(0b111_011_00);
 
     pub const FANCY_BORDER_CORNER_COLOR: Rgb332 = Rgb332(0b000_000_10);
     pub const FANCY_BORDER_EDGE_COLOR: Rgb332 = Rgb332(0b000_000_11);

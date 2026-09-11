@@ -2,7 +2,7 @@ use crate::game::color::Rgb332;
 use crate::game::display::render;
 use crate::game::display::text_writer;
 use crate::game::display::text_writer::FontStyle;
-use crate::game::display_helper::top_bar::draw_top_bar;
+use crate::game::display_helper::top_bar::TopBar;
 use crate::game::globals;
 use crate::game::hardware::hardware::BRIGHTNESS_LUT;
 use crate::game::hardware::hardware::LCD_HEIGHT;
@@ -13,7 +13,9 @@ use crate::game::APPROXIMATE_FRAME_RATE;
 
 use super::scene_manager::SceneManager;
 
-const SECONDS_UNTIL_IDLE: usize = 60;
+/// Set to 0 to disable
+const SECONDS_UNTIL_IDLE: usize = 0;
+// const SECONDS_UNTIL_IDLE: usize = 60;
 const FRAMES_UNTIL_IDLE: usize = SECONDS_UNTIL_IDLE * APPROXIMATE_FRAME_RATE as usize;
 
 /// The core game loop
@@ -32,9 +34,11 @@ pub fn primary_main_loop() -> ! {
 
     let mut idle_frame_counter: usize = 0;
 
+    let mut top_bar = TopBar::default();
+
     // Draw the first frame to initialize the screen
     // Black fails to initialize the display
-    render::flood(Rgb332::DARKEST_BLUE);
+    render::flood(Rgb332::BLACK);
     swap();
 
     loop {
@@ -53,7 +57,7 @@ pub fn primary_main_loop() -> ! {
                 || hardware.key1_pressed()
                 || hardware.key2_pressed()
                 || hardware.key3_pressed();
-            if idle_frame_counter >= FRAMES_UNTIL_IDLE {
+            if SECONDS_UNTIL_IDLE > 0 && idle_frame_counter >= FRAMES_UNTIL_IDLE {
                 input.force_reset();
                 if any_key_pressed {
                     // next frame will return from idle state
@@ -103,7 +107,7 @@ pub fn primary_main_loop() -> ! {
         render::flood(Rgb332::BLACK);
 
         // TODO: some scenes don't have this, don't bother drawing it
-        draw_top_bar();
+        top_bar.draw();
         scene_manager.update_and_draw();
 
         swap();

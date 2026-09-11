@@ -52,18 +52,18 @@
         "zones": {
           "border_display_style": 2,
           "border_hatch_pitch": 0.5,
-          "corner_radius": 0.1,
-          "corner_smoothing": 1,
+          "corner_radius": 0.0,
+          "corner_smoothing": 0,
           "fill_mode": 0,
           "hatch_gap": 1.5,
           "hatch_orientation": 0.0,
           "hatch_smoothing_level": 0,
           "hatch_smoothing_value": 0.1,
           "hatch_thickness": 1.0,
-          "min_clearance": 0.025,
+          "min_clearance": 0.5,
           "min_island_area": 10.0,
-          "min_thickness": 0.025,
-          "pad_connection": 2,
+          "min_thickness": 0.25,
+          "pad_connection": 1,
           "remove_islands": 0,
           "thermal_relief_gap": 0.5,
           "thermal_relief_spoke_width": 0.5
@@ -488,7 +488,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "picopet.kicad_pro",
+    "filename": "mcu.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -656,20 +656,15 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "picopet.kicad_sch",
-        "name": "picopet",
-        "uuid": "2479187f-6e89-4e48-b054-a0f48c7b4f36"
+        "filename": "mcu.kicad_sch",
+        "name": "mcu",
+        "uuid": "00000000-0000-0000-0000-000000000000"
       }
     ],
     "used_designators": "",
     "variants": []
   },
-  "sheets": [
-    [
-      "2479187f-6e89-4e48-b054-a0f48c7b4f36",
-      "picopet"
-    ]
-  ],
+  "sheets": [],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {

@@ -52,17 +52,17 @@
         "zones": {
           "border_display_style": 2,
           "border_hatch_pitch": 0.5,
-          "corner_radius": 0.1,
-          "corner_smoothing": 1,
+          "corner_radius": 0.0,
+          "corner_smoothing": 0,
           "fill_mode": 0,
           "hatch_gap": 1.5,
           "hatch_orientation": 0.0,
           "hatch_smoothing_level": 0,
           "hatch_smoothing_value": 0.1,
           "hatch_thickness": 1.0,
-          "min_clearance": 0.025,
+          "min_clearance": 0.2,
           "min_island_area": 10.0,
-          "min_thickness": 0.025,
+          "min_thickness": 0.2,
           "pad_connection": 2,
           "remove_islands": 0,
           "thermal_relief_gap": 0.5,
@@ -488,7 +488,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "picopet.kicad_pro",
+    "filename": "mcu.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -635,14 +635,14 @@
       "intersheets_ref_show": false,
       "intersheets_ref_suffix": "",
       "junction_size_choice": 3,
-      "label_size_ratio": 0.25,
+      "label_size_ratio": 0.375,
       "operating_point_overlay_i_precision": 3,
       "operating_point_overlay_i_range": "~A",
       "operating_point_overlay_v_precision": 3,
       "operating_point_overlay_v_range": "~V",
       "overbar_offset_ratio": 1.23,
-      "pin_symbol_size": 0.0,
-      "text_offset_ratio": 0.08
+      "pin_symbol_size": 25.0,
+      "text_offset_ratio": 0.15
     },
     "legacy_lib_dir": "",
     "legacy_lib_list": [],
@@ -656,18 +656,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "picopet.kicad_sch",
-        "name": "picopet",
-        "uuid": "2479187f-6e89-4e48-b054-a0f48c7b4f36"
+        "filename": "mcu.kicad_sch",
+        "name": "Root",
+        "uuid": "9186221f-fe33-468a-af26-60ac2e750397"
       }
     ],
-    "used_designators": "",
+    "used_designators": "SW2,R1-4,C1-16,Y1,#PWR1-27,#PWR43-47,U1,U7",
     "variants": []
   },
   "sheets": [
     [
-      "2479187f-6e89-4e48-b054-a0f48c7b4f36",
-      "picopet"
+      "9186221f-fe33-468a-af26-60ac2e750397",
+      "Root"
     ]
   ],
   "text_variables": {},

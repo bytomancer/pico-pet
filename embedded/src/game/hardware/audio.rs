@@ -98,7 +98,7 @@ impl AudioFrequency {
             Self::B6 => AudioRegisterConfig::new(63273, 1, 0),
             Self::C7 => AudioRegisterConfig::new(59721, 1, 0),
 
-            Self::None => AudioRegisterConfig::new(0, 0, 0),
+            Self::None => AudioRegisterConfig::new(65534, 1, 0),
         }
     }
 }

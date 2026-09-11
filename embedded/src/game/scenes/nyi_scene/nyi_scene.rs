@@ -1,3 +1,7 @@
+use crate::game::audio::audio_library::AudioId;
+use crate::game::audio::audio_player::AudioPlayer;
+use crate::game::audio::audio_player::AutoPlayMode;
+use crate::game::audio::audio_player::RepeatMode;
 /// # Not Yet Implementd Scene
 /// You can access this scene currently via the main menu,
 /// as it is being used as a placeholder for scenes not yet implemented.
@@ -20,6 +24,7 @@ pub struct NyiScene {
     // bat_reading_i: usize,
     frame_count: usize,
     fps: usize,
+    button_beep: AudioPlayer,
 }
 impl Default for NyiScene {
     fn default() -> Self {
@@ -29,6 +34,7 @@ impl Default for NyiScene {
             // bat_reading_i: 0,
             frame_count: 0,
             fps: 0,
+            button_beep: AudioPlayer::new(AudioId::ButtonBeep, RepeatMode::Off, AutoPlayMode::Off),
         }
     }
 }
@@ -47,11 +53,18 @@ impl SceneBehavior for NyiScene {
 
     fn tick(&mut self) {
         self.frame_count += 1;
+        let hardware = crate::game::globals::get_hardware();
+        let input = crate::game::globals::get_input();
+        if input.get_state(&KeyNames::Clock).is_down
+            && hardware.get_time().sec == 0
+            && hardware.get_time().min == 0
+        {
+            self.button_beep.play();
+        }
     }
 
     fn sound(&mut self) {
-        let hardware = crate::game::globals::get_hardware();
-        hardware.end_tone();
+        self.button_beep.tick();
     }
 
     fn draw(&mut self) {
@@ -225,9 +238,13 @@ impl SceneBehavior for NyiScene {
 
         let battery = crate::game::globals::get_battery();
         let vsense_avg = battery.get_average().unwrap_or(0);
+        let vsense_pct = battery.get_percent();
+
+        // let hardware = crate::game::globals::get_hardware();
+        // let vsense_now = hardware.get_vsense();
 
         y += 8;
-        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "BATTERY LEVEL:");
+        draw_text_left_aligned_nowrap(8, y, FontStyle::Small, Rgb332::BLACK, "BATTERY READING:");
         y += 8;
         draw_text_left_aligned_nowrap(
             8,
@@ -235,6 +252,14 @@ impl SceneBehavior for NyiScene {
             FontStyle::Small,
             Rgb332::BLACK,
             &fixedstr::str_format!(fixedstr::str32, "{}", vsense_avg),
+        );
+        y += 8;
+        draw_text_left_aligned_nowrap(
+            8,
+            y,
+            FontStyle::Small,
+            Rgb332::BLACK,
+            &fixedstr::str_format!(fixedstr::str32, "{} %", vsense_pct),
         );
 
         y += 8;
@@ -244,6 +269,30 @@ impl SceneBehavior for NyiScene {
             FontStyle::Small,
             Rgb332::BLACK,
             &fixedstr::str_format!(fixedstr::str32, "FPS: {}", self.fps),
+        );
+
+        y += 8;
+        let hw = crate::game::globals::get_hardware();
+        let chg_ind_str = if hw.charge_indicator() { "yes" } else { "no" };
+        draw_text_left_aligned_nowrap(
+            8,
+            y,
+            FontStyle::Small,
+            Rgb332::BLACK,
+            &fixedstr::str_format!(fixedstr::str32, "CHARGING: {}", chg_ind_str),
+        );
+
+        y += 8;
+
+        let bat_lvl = battery.get_level();
+        let bat_lvl_num = bat_lvl.into_int();
+
+        draw_text_left_aligned_nowrap(
+            8,
+            y,
+            FontStyle::Small,
+            Rgb332::BLACK,
+            &fixedstr::str_format!(fixedstr::str32, "BAT STATE LVL: {}", bat_lvl_num),
         );
     }
 
